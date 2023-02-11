@@ -2,18 +2,18 @@ import { withTimeout } from "../main/PromiseTimeout";
 
 export type WaitingClient<T> = { resolve: (api: T) => void; reject: (error: unknown) => void; };
 
-// these closures allow the caller to access the shared API information in a type-safe way
-// that will be frozen to the version imported by the client, since the closures are passed in by 
+// these function used to access the shared API information in a type-safe way
+// will be frozen to the version imported by the client, since the closures are passed in by 
 // the client
 export interface PluginABI<T> {
     // to be provided if interfaces are not going to be stored at window["derammo.api"], to lazy initialize
     // whatever storage is used
-    initialize?: () => void;
+    initialize?(): void;
 
-    getAPI: () => T | undefined;
-    setAPI: (value: T | undefined) => void;
-    getClients: () => WaitingClient<T>[] | undefined;
-    setClients: (clients: WaitingClient<T>[] | undefined) => void
+    getAPI(): T | undefined;
+    setAPI(value: T | undefined): void;
+    getClients(): WaitingClient<T>[] | undefined;
+    setClients(clients: WaitingClient<T>[] | undefined): void;
 }
 
 function initialize<T>(abi: PluginABI<T>) {
