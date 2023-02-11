@@ -11,7 +11,7 @@ export interface PluginABI<T> {
     initialize?(): void;
 
     getAPI(): T | undefined;
-    setAPI(value: T | undefined): void;
+    setAPI(api: T | undefined): void;
     getClients(): WaitingClient<T>[] | undefined;
     setClients(clients: WaitingClient<T>[] | undefined): void;
 }
@@ -21,8 +21,8 @@ function initialize<T>(abi: PluginABI<T>) {
         abi.initialize();
     } else {
         // our default storage location
-        if (window["derammo.api"] === undefined) {
-            window["derammo.api"] = { providers: {}, clients: {} };
+        if ((window as any)["derammo.api"] === undefined) {
+            (window as any)["derammo.api"] = { providers: {}, clients: {} };
         }
     }
 }
