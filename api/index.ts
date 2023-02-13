@@ -1,43 +1,28 @@
 import { withTimeout } from "../main/PromiseTimeout";
 
-export type WaitingClient<T> = { resolve: (api: T) => void; reject: (error: unknown) => void; };
+type WaitingClient<T> = { resolve: (api: T) => void; reject: (error: unknown) => void; };
 
-// these function used to access the shared API information in a type-safe way
-// will be frozen to the version imported by the client, since the closures are passed in by 
-// the client
-export interface PluginABI<T> {
-    // to be provided if interfaces are not going to be stored at window["derammo.api"], to lazy initialize
-    // whatever storage is used
-    initialize?(): void;
-
-    getAPI(): T | undefined;
-    setAPI(api: T | undefined): void;
-    getClients(): WaitingClient<T>[] | undefined;
-    setClients(clients: WaitingClient<T>[] | undefined): void;
+export interface PluginInterface<T> {
+    api: T | undefined;
+    waitingClients: WaitingClient<T>[] | undefined;
 }
 
-function initialize<T>(abi: PluginABI<T>) {
-    if (abi.initialize !== undefined) {
-        abi.initialize();
-    } else {
-        // our default storage location
-        if ((window as any)["derammo.api"] === undefined) {
-            (window as any)["derammo.api"] = { providers: {}, clients: {} };
-        }
-    }
+// these function used to access the shared API information in a type-safe way
+// will be frozen to the version imported by the client
+export interface PluginABI<T> {
+    initializeInterface(record: PluginInterface<T>): void;
+    getInterface(): PluginInterface<T> | undefined;
 }
 
 export function getAPI<T>(abi: PluginABI<T>, timeoutMilliseconds?: number): Promise<T> {
-    initialize<T>(abi);
-    const current = abi.getAPI();
-    if (current !== undefined) {
-        return Promise.resolve(current);
+    const record = initialize<T>(abi);
+    if (record.api !== undefined) {
+        // is ready
+        return Promise.resolve(record.api);
     }
+    record.waitingClients = record.waitingClients ?? [];
     const future = new Promise<T>((resolve, reject) => {
-        if (abi.getClients() === undefined) {
-            abi.setClients([]);
-        }
-        abi.getClients()!.push({ resolve, reject });
+        record.waitingClients.push({ resolve, reject });
     });
     if (timeoutMilliseconds === undefined) {
         return future;
@@ -46,46 +31,54 @@ export function getAPI<T>(abi: PluginABI<T>, timeoutMilliseconds?: number): Prom
 }
 
 export function publishAPI<T>(abi: PluginABI<T>, api: T | undefined): void {
-    initialize<T>(abi);
-    if (abi.getAPI() !== undefined && api !== undefined) {
+    const record = initialize<T>(abi);
+    if (record.api !== undefined) {
         console.error(`${typeof api} already set`);
         return;
     }
-    abi.setAPI(api);
+    record.api = api;
 
     if (api === undefined) {
         console.debug(`resetting ${typeof api}, no notifications needed`);
+        record.waitingClients = undefined;
         return;
     }
 
-    if (abi.getClients() === undefined) {
+    if (record.waitingClients === undefined) {
         console.debug(`${typeof api} no waiting clients`);
         return;
     }
 
     // notify any clients who started before us and are therefore waiting
-    const clients: WaitingClient<T>[] = abi.getClients()!;
-    for (let client of clients) {
+    for (let client of record.waitingClients) {
         client.resolve(api);
     }
     
     // satisfied all waiting clients
-    abi.setClients(undefined);
+    record.waitingClients = undefined;
 }
 
 export function rejectAPI<T>(abi: PluginABI<T>, error: unknown): void {
-    initialize<T>(abi);
-    abi.setAPI(undefined);
-    if (abi.getClients() === undefined) {
+    const record = initialize<T>(abi);
+    record.api = undefined;
+    if (record.waitingClients === undefined) {
         return;
     }
 
     // notify any clients who started before us and are therefore waiting
-    const clients: WaitingClient<T>[] = abi.getClients()!;
-    for (let client of clients) {
+    for (let client of record.waitingClients) {
         client.reject(error);
     }
     
     // informed all waiting clients
-    abi.setClients(undefined);
+    record.waitingClients = undefined;
+}
+
+function initialize<T>(abi: PluginABI<T>) {
+    let current = abi.getInterface();
+    if (current === undefined) {
+        current = { api: undefined, waitingClients: undefined };
+        abi.initializeInterface(current);
+    }
+    return current;
 }
