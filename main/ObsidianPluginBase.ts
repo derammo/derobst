@@ -5,8 +5,13 @@ import { MinimalPlugin } from "../interfaces";
 import { ViewPluginBase } from "../view";
 
 export abstract class ObsidianPluginBase<TSettings> extends Plugin implements MinimalPlugin {
+	// This is only ever accessed after onLoad(), so that our settings are always valid.
+	settings: TSettings;
 	settingsDirty = false;
-	settings: TSettings | undefined = undefined;
+
+	async loadSettings(defaultSettings: TSettings) {
+		this.settings = Object.assign({}, defaultSettings, await this.loadData());
+	}
 
 	async saveSettings() {
 		this.settingsDirty = true;
