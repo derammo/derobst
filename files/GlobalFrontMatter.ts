@@ -4,9 +4,9 @@ import { GlobalMetaData } from "./GlobalMetaData";
 type TagInfo = { [key: string]: unknown; }
 
 export class Definitions {
-    stale = false;
-    items: Map<string, TagInfo> = new Map<string, TagInfo>();
-    effective: TagInfo | undefined = undefined;
+    private stale = false;
+    private items: Map<string, TagInfo> = new Map<string, TagInfo>();
+    private effective: TagInfo | undefined = undefined;
 
     add(definingPath: string, info: TagInfo) {
         this.items.set(definingPath, info);
