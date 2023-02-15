@@ -36,6 +36,10 @@ export class Definitions {
         return this.effective;
     }
 
+    get size(): number {
+        return this.items.size;
+    }
+
     private computeEffective(): TagInfo | undefined {
         // We don't bother to keep these sorted, since usually there are
         // very few redefinitions.   If that were to change, we would need
@@ -114,7 +118,7 @@ export abstract class GlobalFrontMatter extends GlobalMetaData<FileDefinitions> 
     protected removeEntry(file: TFile, current: FileDefinitions): void {
         for (const record of current) {
             record.value.remove(file.path);
-            if (record.value.items.size === 0) {
+            if (record.value.size < 1) {
                 // no longer has any definitions, so clean it up
                 this.removeRecord(record.key);
             }
