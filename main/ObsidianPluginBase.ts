@@ -7,10 +7,15 @@ import { ViewPluginBase } from "../view";
 import { ContextMenuActionsTarget } from "./ContextMenuActionsTarget";
 
 export abstract class ObsidianPluginBase<TSettings> extends Plugin implements MinimalPlugin {
+	// This is only ever accessed after onLoad(), so that our settings are always valid.
+	settings: TSettings;
 	settingsDirty = false;
-	settings: TSettings | undefined = undefined;
 	
 	protected contextTarget: ContextMenuActionsTarget = new ContextMenuActionsTarget();
+
+	async loadSettings(defaultSettings: TSettings) {
+		this.settings = Object.assign({}, defaultSettings, await this.loadData());
+	}
 
 	async saveSettings() {
 		this.settingsDirty = true;

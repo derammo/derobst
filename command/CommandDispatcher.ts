@@ -1,4 +1,5 @@
 import { SyntaxNodeRef, Tree } from '@lezer/common';
+import { INLINE_CODE_IN_QUOTE_NODE, INLINE_CODE_NODE } from 'derobst/internals';
 import { MinimalPlugin } from "../interfaces/MinimalPlugin";
 import { ExtensionContext } from "../main";
 
@@ -61,8 +62,8 @@ export class CommandDispatcher<THostPlugin extends MinimalPlugin> {
                     }
                 }
                 switch (node.type.name) {
-                    case "inline-code":
-                    case "inline-code_quote_quote-1": {
+                    case INLINE_CODE_NODE:
+                    case INLINE_CODE_IN_QUOTE_NODE: {
                         const text = context.state.doc.sliceString(node.from, node.to);
                         if (text.match(REQUIRED_COMMAND_PREFIX) === null) {
                             return;
