@@ -5,8 +5,10 @@ import { MinimalPlugin } from '../interfaces';
 import { ViewPluginContext } from '../view';
 
 import { MinimalCommand } from './CommandDispatcher';
+import { ContextMenuActions } from '../interfaces/ContextMenuActions';
+import { Editor, EditorPosition } from 'obsidian';
 
-export abstract class ParsedCommand<THostPlugin extends MinimalPlugin> implements MinimalCommand<THostPlugin> {
+export abstract class ParsedCommand<THostPlugin extends MinimalPlugin> implements MinimalCommand<THostPlugin>, ContextMenuActions {
     abstract buildWidget(context: ViewPluginContext<THostPlugin>): void;
     abstract get regex(): RegExp;
 
@@ -30,5 +32,17 @@ export abstract class ParsedCommand<THostPlugin extends MinimalPlugin> implement
 	async handleUsed(_view: EditorView) {
         // no code
 	}
+
+    canDelete = true;
+
+    delete(editor: Editor): boolean {
+        if (this.commandNode === undefined) {
+            return false;
+        }
+        const from: EditorPosition = editor.offsetToPos(this.commandNode.from-1);
+        const to: EditorPosition = editor.offsetToPos(this.commandNode.to+1);
+        editor.replaceRange("", from, to);
+        return true;
+    }
 }
 
