@@ -45,7 +45,7 @@ export abstract class ObsidianPluginBase<TSettings> extends Plugin implements Mi
 	 */
 	protected registerContextMenuDeleteElement() {
 		this.registerEvent(
-			this.app.workspace.on("editor-menu", (menu, editor, view) => {
+			this.app.workspace.on("editor-menu", (menu, editor, _view) => {
 				const target = this.contextTarget.get();
 				if (target === undefined) {
 					return;
