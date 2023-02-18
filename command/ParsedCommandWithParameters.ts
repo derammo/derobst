@@ -25,7 +25,7 @@ export abstract class ParsedCommandWithParameters<THostPlugin extends MinimalPlu
                 const equals = setting.indexOf("=");
                 if (equals == 0) {
                     // discard any work we did
-                    // XXX log parse error
+                    console.log(`ignored command parameters containing invalid setting that was supposed to be of format KEY[=VALUE]: '${setting}'`)
                     this.parameters = {};
                     return null;
                 }
