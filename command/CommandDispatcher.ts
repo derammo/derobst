@@ -1,6 +1,6 @@
 import { SyntaxNodeRef, Tree } from '@lezer/common';
-import { INLINE_CODE_IN_QUOTE_NODE, INLINE_CODE_NODE } from 'derobst/internals';
-import { MinimalPlugin } from "../interfaces/MinimalPlugin";
+import { INLINE_CODE_IN_QUOTE_NODE, INLINE_CODE_NODE } from '../internals';
+import { MinimalPlugin } from "../interfaces";
 import { ExtensionContext } from "../main";
 
 export const REQUIRED_COMMAND_PREFIX = /^\s*!/;

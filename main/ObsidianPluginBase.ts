@@ -1,14 +1,12 @@
 import { EditorView, ViewPlugin } from "@codemirror/view";
-import { ContextMenuActions } from "derobst/interfaces/ContextMenuActions";
 import { Plugin } from 'obsidian';
-
-import { MinimalPlugin } from "../interfaces";
+import { MinimalPlugin, ContextMenuActions } from "../interfaces";
 import { ViewPluginBase } from "../view";
 import { ContextMenuActionsTarget } from "./ContextMenuActionsTarget";
 
 export abstract class ObsidianPluginBase<TSettings> extends Plugin implements MinimalPlugin {
 	// This is only ever accessed after onLoad(), so that our settings are always valid.
-	settings: TSettings;
+	settings!: TSettings;
 	settingsDirty = false;
 	
 	protected contextTarget: ContextMenuActionsTarget = new ContextMenuActionsTarget();

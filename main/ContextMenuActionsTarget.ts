@@ -1,5 +1,4 @@
-import { ContextMenuActions } from "derobst/interfaces/ContextMenuActions";
-
+import { ContextMenuActions } from "../interfaces";
 
 export class ContextMenuActionsTarget {
 	private target: ContextMenuActions | undefined = undefined;
