@@ -1,22 +1,23 @@
 import { EditorView } from '@codemirror/view';
-import { SyntaxNode, SyntaxNodeRef } from '@lezer/common/dist/tree';
+import { SyntaxNodeRef } from '@lezer/common/dist/tree';
 
-import { MinimalPlugin } from '../interfaces';
-import { ViewPluginContext } from '../view';
-
-import { MinimalCommand } from './CommandDispatcher';
-import { ContextMenuActions } from '../interfaces/ContextMenuActions';
 import { Editor, EditorPosition } from 'obsidian';
 
-export abstract class ParsedCommand<THostPlugin extends MinimalPlugin> implements MinimalCommand<THostPlugin>, ContextMenuActions {
-    abstract buildWidget(context: ViewPluginContext<THostPlugin>): void;
+import { MinimalCommandHost, WidgetContext } from '../interfaces';
+import { UpdatedTextRange, ViewPluginContext } from '../view';
+
+import { ContextMenuActions } from '../interfaces/ContextMenuActions';
+import { MinimalCommand } from './CommandDispatcher';
+
+export abstract class ParsedCommand<THostPlugin extends MinimalCommandHost<THostPlugin>> implements MinimalCommand<THostPlugin>, ContextMenuActions {
+    commandRange: UpdatedTextRange | undefined = undefined;
+
+    abstract buildWidget(context: ViewPluginContext<THostPlugin>, commandNodeRef: SyntaxNodeRef): void;
+
     abstract get regex(): RegExp;
 
-    // WARNING: this is only stable as long as the document does not change, because it contains offsets into the text
-    commandNode: SyntaxNode | undefined = undefined;
-
-    parse(text: string, commandNodeRef: SyntaxNodeRef): RegExpMatchArray | null {
-        if (this.commandNode !== undefined) {
+    parse(context: WidgetContext<THostPlugin>, text: string, commandNodeRef: SyntaxNodeRef): RegExpMatchArray | null {
+        if (this.commandRange !== undefined) {
             throw new Error("must not reuse ParsedCommand object, since it carries state and is referenced by clients")
         }
         const match: RegExpMatchArray | null = text.match(this.regex);
@@ -24,8 +25,7 @@ export abstract class ParsedCommand<THostPlugin extends MinimalPlugin> implement
             return match;
         }
 
-        // freeze to retain this node
-        this.commandNode = commandNodeRef.node; 
+        this.commandRange = context.plugin.tracking.register(context.state, commandNodeRef);
         return match;
     }
 
@@ -35,14 +35,24 @@ export abstract class ParsedCommand<THostPlugin extends MinimalPlugin> implement
 
     canDelete = true;
 
+    /**
+     * Delete using editor interface, as called from menu.  Can't access the state of the document, since we don't have it.
+     * @param editor 
+     * @returns 
+     */
     delete(editor: Editor): boolean {
-        if (this.commandNode === undefined) {
+        if (this.commandRange === undefined) {
             return false;
         }
-        const from: EditorPosition = editor.offsetToPos(this.commandNode.from-1);
-        const to: EditorPosition = editor.offsetToPos(this.commandNode.to+1);
+        const range = this.commandRange.fetchCurrentRange();
+        if (range === null) {
+            return false;
+        }
+        const from: EditorPosition = editor.offsetToPos(range.from-1);
+        const to: EditorPosition = editor.offsetToPos(range.to+1);
         editor.replaceRange("", from, to);
         return true;
+
     }
 }
 

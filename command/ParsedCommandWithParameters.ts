@@ -1,22 +1,28 @@
 import { EditorView } from '@codemirror/view';
 import { SyntaxNodeRef } from '@lezer/common/dist/tree';
-import { MinimalPlugin } from '../interfaces';
+import { MinimalCommandHost } from '../interfaces';
+import { CommandContext } from './CommandDispatcher';
 import { ParsedCommand } from './ParsedCommandBase';
 
-export abstract class ParsedCommandWithParameters<THostPlugin extends MinimalPlugin> extends ParsedCommand<THostPlugin> {
+export abstract class ParsedCommandWithParameters<THostPlugin extends MinimalCommandHost<THostPlugin>> extends ParsedCommand<THostPlugin> {
     parameters: { [key: string]: boolean | string; } = {};
 
     async handleUsed(view: EditorView) {
         super.handleUsed(view);
-        if (this.parameters.remove && this.commandNode !== undefined) {
-            view.dispatch({
-                changes: { from: this.commandNode.from - 1, to: this.commandNode.to + 1 }
-            });
+        if (!this.parameters.remove) {
+            return;
+        } 
+        const range = this.commandRange?.fetchCurrentRange() ?? null;
+        if (range === null) {
+            return;
         }
+        view.dispatch({
+            changes: { from: range.from - 1, to: range.to + 1 }
+        });
     }
 
-    parse(text: string, commandNodeRef: SyntaxNodeRef): RegExpMatchArray | null {
-        const match = super.parse(text, commandNodeRef);
+    parse(context: CommandContext<THostPlugin>, text: string, commandNodeRef: SyntaxNodeRef): RegExpMatchArray | null {
+        const match = super.parse(context, text, commandNodeRef);
         if (match === null) {
             return match;
         }

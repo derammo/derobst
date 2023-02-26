@@ -1,7 +1,7 @@
 import { EditorView, ViewPlugin } from "@codemirror/view";
 import { Plugin } from 'obsidian';
-import { MinimalPlugin, ContextMenuActions } from "../interfaces";
-import { ViewPluginBase } from "../view";
+import { ContextMenuActions, MinimalPlugin } from "../interfaces";
+import { createTextRangeUpdater, TextRangeTracking, ViewPluginBase } from "../view";
 import { ContextMenuActionsTarget } from "./ContextMenuActionsTarget";
 
 export abstract class ObsidianPluginBase<TSettings> extends Plugin implements MinimalPlugin {
@@ -9,6 +9,8 @@ export abstract class ObsidianPluginBase<TSettings> extends Plugin implements Mi
 	settings!: TSettings;
 	settingsDirty = false;
 	
+	readonly tracking: TextRangeTracking = createTextRangeUpdater();
+
 	protected contextTarget: ContextMenuActionsTarget = new ContextMenuActionsTarget();
 
 	async loadSettings(defaultSettings: TSettings) {
@@ -36,6 +38,13 @@ export abstract class ObsidianPluginBase<TSettings> extends Plugin implements Mi
 
     setContextTarget(target: ContextMenuActions): void {
 		this.contextTarget.set(target, Date.now());
+	}
+
+	/**
+	 * register a state field that tracks current positions of registered text ranges
+	 */
+	protected registerTextRangeTracker() {
+		this.registerEditorExtension(this.tracking.createExtensions());
 	}
 
 	/**
