@@ -27,20 +27,18 @@ export abstract class ParsedCommandWithParameters<THostPlugin extends MinimalCom
             return match;
         }
         if (match[1] !== undefined) {
-            match[1].split(/\s+/).forEach((setting: string) => {
-                const equals = setting.indexOf("=");
-                if (equals == 0) {
-                    // discard any work we did
-                    console.log(`ignored command parameters containing invalid setting that was supposed to be of format KEY[=VALUE]: '${setting}'`)
-                    this.parameters = {};
-                    return null;
+            // string values, supporting double quotes
+            for (const parameterMatch of match[1].matchAll(/([^= ]+)=(?:"(.+?)"|([^=\s]+(?=\s|$)))/g)) {
+                if (parameterMatch[2] !== undefined) {
+                    this.parameters[parameterMatch[1]] = parameterMatch[2];
+                } else if (parameterMatch[3] !== undefined) {
+                    this.parameters[parameterMatch[1]] = parameterMatch[3];
                 }
-                if (equals > 0) {
-                    this.parameters[setting.slice(0, equals)] = setting.slice(equals + 1);
-                } else {
-                    this.parameters[setting] = true;
-                }
-            });
+            }
+            // boolean values
+            for (const parameterMatch of match[1].matchAll(/(?:^|\s)([^"= ]+)(?:\s|$)/g)) {
+                this.parameters[parameterMatch[1]] = true;
+            }
         }
         return match;
     }
