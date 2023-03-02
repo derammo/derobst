@@ -6,6 +6,7 @@ export const IMAGE_ALT_TEXT_NODE = 'image_image-alt-text_link';
 export const STRING_URL_NODE = 'string_url';
 export const INLINE_CODE_NODE = "inline-code";
 export const INLINE_CODE_IN_QUOTE_NODE = "inline-code_quote_quote-1";
+export const INLINE_CODE_IN_LIST_NODE = "inline-code_list-1";
 
 export const QUOTE_REGEX = /^\s*>([^`]*)(`|$)/
 

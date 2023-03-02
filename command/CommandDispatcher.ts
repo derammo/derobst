@@ -1,7 +1,9 @@
 import { SyntaxNodeRef, Tree } from '@lezer/common';
-import { INLINE_CODE_IN_QUOTE_NODE, INLINE_CODE_NODE } from '../internals';
+import { INLINE_CODE_IN_LIST_NODE, INLINE_CODE_IN_QUOTE_NODE, INLINE_CODE_NODE } from '../internals';
 import { MinimalPlugin, WidgetContext } from "../interfaces";
 import { ExtensionContext } from "../main";
+import { createCommandRemovalPostProcessor } from './CommandRemovalPostProcessor';
+import { MarkdownPostProcessor } from 'obsidian';
 
 export const REQUIRED_COMMAND_PREFIX = /^\s*!/;
 
@@ -63,9 +65,11 @@ export class CommandDispatcher<THostPlugin extends MinimalPlugin> {
                         observer.observe?.(node);
                     }
                 }
+                // console.log(`${node.type.name} '${context.state.doc.sliceString(node.from, node.to)}'`, node);
                 switch (node.type.name) {
                     case INLINE_CODE_NODE:
-                    case INLINE_CODE_IN_QUOTE_NODE: {
+                    case INLINE_CODE_IN_QUOTE_NODE:
+                    case INLINE_CODE_IN_LIST_NODE: {
                         const text = context.state.doc.sliceString(node.from, node.to);
                         if (text.match(REQUIRED_COMMAND_PREFIX) === null) {
                             return;
@@ -105,5 +109,9 @@ export class CommandDispatcher<THostPlugin extends MinimalPlugin> {
                 }
             }
         });
+    }
+
+    createRemovalPostProcessor(): MarkdownPostProcessor {
+        return createCommandRemovalPostProcessor(this);
     }
 }
